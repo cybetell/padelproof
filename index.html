@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Teste ton niveau de padel | PadelProof</title>
+<meta name="description" content="6 questions, 2 minutes. Découvre l'écart entre le niveau que tu t'attribues et ton vrai niveau de padel.">
+<meta property="og:title" content="Teste ton niveau de padel">
+<meta property="og:description" content="Tu te crois niveau 6 ? Le quiz a peut-être un autre avis.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎾</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --noir: #000000;
+    --gris-fonce: #1A1A1A;
+    --ligne: #3A3427;
+    --or: #D4AF37;
+    --or-vif: #FFD700;
+    --texte: #F4E6B8;
+    --texte-doux: #B9B2A0;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--noir);
+    color: var(--texte);
+    font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 17px;
+    line-height: 1.5;
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+    overflow-x: hidden;
+  }
+
+  /* Terrain de padel vu du dessus, en filigrane */
+  .terrain {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: .22;
+  }
+  .terrain svg { height: 118vh; width: auto; transform: rotate(-8deg); }
+
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 580px;
+    margin: 0 auto;
+    padding: 40px 22px 32px;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .marque {
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--or);
+    font-variation-settings: "wdth" 85;
+    margin-bottom: 48px;
+  }
+  .ecran { display: none; flex: 1; flex-direction: column; }
+  .ecran.actif { display: flex; }
+
+  h1 {
+    font-size: clamp(46px, 13vw, 76px);
+    line-height: .92;
+    font-weight: 800;
+    font-variation-settings: "wdth" 75;
+    color: var(--texte);
+    letter-spacing: -.01em;
+  }
+  h1 .vitre {
+    display: block;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--or-vif);
+  }
+  .accroche { margin-top: 24px; font-size: 19px; max-width: 30em; color: var(--texte); }
+  .accroche-doux { margin-top: 10px; color: var(--texte-doux); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 18px;
+    border-radius: 999px;
+    padding: 16px 30px;
+    border: 2px solid var(--or-vif);
+    background: var(--or-vif);
+    color: var(--noir);
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .btn:hover { background: #FFE34D; }
+  .btn:active { transform: scale(.98); }
+  .btn.secondaire { background: transparent; color: var(--or-vif); }
+  .btn.secondaire:hover { background: rgba(255, 215, 0, .1); }
+  .btn.discret { background: transparent; border-color: var(--ligne); color: var(--texte-doux); font-weight: 600; font-size: 16px; }
+  :focus-visible { outline: 3px solid var(--or-vif); outline-offset: 3px; }
+
+  .depart { margin-top: 40px; }
+  .pied {
+    margin-top: auto;
+    padding-top: 48px;
+    font-size: 14px;
+    color: var(--texte-doux);
+  }
+
+  /* Questions */
+  .progression { display: flex; gap: 6px; margin-bottom: 14px; }
+  .progression span {
+    flex: 1; height: 4px; border-radius: 2px; background: var(--ligne);
+    transition: background .3s ease;
+  }
+  .progression span.fait { background: var(--or); }
+  .compteur { font-size: 15px; color: var(--texte-doux); margin-bottom: 18px; }
+  .question {
+    font-size: clamp(28px, 7.5vw, 38px);
+    line-height: 1.08;
+    font-weight: 700;
+    font-variation-settings: "wdth" 85;
+    margin-bottom: 28px;
+  }
+  .reponses { display: flex; flex-direction: column; gap: 10px; }
+  .reponse {
+    font: inherit;
+    font-size: 17px;
+    text-align: left;
+    color: var(--texte);
+    background: var(--gris-fonce);
+    border: 1.5px solid var(--ligne);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .reponse:hover { border-color: var(--or); }
+  .reponse.choisie { border-color: var(--or-vif); background: rgba(255, 215, 0, .1); }
+  .reponses.verrou .reponse:not(.choisie) { opacity: .4; }
+  .grille-niveaux { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .grille-niveaux .reponse { text-align: center; padding: 14px 8px; }
+  .grille-niveaux .num { display: block; font-size: 30px; font-weight: 800; line-height: 1; color: var(--or-vif); }
+  .grille-niveaux .nom { display: block; font-size: 13px; color: var(--texte-doux); margin-top: 6px; }
+  .reaction {
+    min-height: 28px;
+    margin-top: 20px;
+    color: var(--or);
+    font-style: italic;
+    opacity: 0;
+    transition: opacity .2s ease;
+  }
+  .reaction.visible { opacity: 1; }
+
+  /* Résultat */
+  .verdict-intro { font-size: 15px; color: var(--texte-doux); }
+  .profil {
+    font-size: clamp(40px, 11vw, 62px);
+    line-height: .95;
+    font-weight: 800;
+    font-variation-settings: "wdth" 75;
+    color: var(--or-vif);
+    margin: 6px 0 16px;
+  }
+  .commentaire { font-size: 19px; max-width: 30em; }
+
+  .tableau {
+    margin: 32px 0 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1.5px solid var(--or);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .tableau div { padding: 18px 16px 16px; }
+  .tableau div + div { border-left: 1.5px solid var(--or); }
+  .tableau .lib { font-size: 14px; color: var(--texte-doux); }
+  .tableau .val {
+    font-size: 64px; font-weight: 800; line-height: 1; margin-top: 6px;
+    font-variation-settings: "wdth" 75;
+    font-variant-numeric: tabular-nums;
+  }
+  .tableau .niv { font-size: 15px; margin-top: 4px; }
+  .tableau .quiz .val { color: var(--or-vif); }
+  .ecart { font-size: 15px; color: var(--texte-doux); }
+
+  .verite {
+    margin-top: 40px;
+    padding-top: 28px;
+    border-top: 1.5px solid var(--ligne);
+  }
+  .verite h2 {
+    font-size: clamp(26px, 7vw, 34px);
+    line-height: 1.1;
+    font-weight: 700;
+    font-variation-settings: "wdth" 85;
+  }
+  .etapes { list-style: none; counter-reset: etape; margin: 22px 0 28px; }
+  .etapes li {
+    counter-increment: etape;
+    position: relative;
+    padding-left: 46px;
+    margin-bottom: 16px;
+  }
+  .etapes li::before {
+    content: counter(etape);
+    position: absolute; left: 0; top: -2px;
+    width: 32px; height: 32px;
+    border: 1.5px solid var(--or);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-weight: 700; color: var(--or-vif); font-size: 16px;
+  }
+  .actions { display: flex; flex-direction: column; gap: 12px; }
+  .partage { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .partage .btn { font-size: 16px; padding: 14px 16px; }
+  .note-copie { min-height: 22px; font-size: 14px; color: var(--or); text-align: center; }
+
+  .apparait { animation: apparait .45s ease both; }
+  @keyframes apparait { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+  @media (max-width: 380px) {
+    .partage { grid-template-columns: 1fr; }
+    .tableau .val { font-size: 52px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="terrain" aria-hidden="true">
+  <svg viewBox="0 0 200 400" fill="none" stroke="#D4AF37" stroke-width="1.2">
+    <rect x="10" y="10" width="180" height="380" rx="2"/>
+    <line x1="10" y1="200" x2="190" y2="200" stroke-width="2.4"/>
+    <line x1="10" y1="80" x2="190" y2="80"/>
+    <line x1="10" y1="320" x2="190" y2="320"/>
+    <line x1="100" y1="80" x2="100" y2="320"/>
+    <rect x="6" y="6" width="188" height="388" rx="4" stroke-dasharray="3 5" opacity=".7"/>
+  </svg>
+</div>
+
+<main>
+  <div class="marque">PadelProof</div>
+
+  <!-- Accueil -->
+  <section class="ecran actif" id="accueil">
+    <h1>Teste ton niveau de padel<span class="vitre">sans tricher.</span></h1>
+    <p class="accroche">6 questions, 2 minutes. À la fin, on compare le niveau que tu t'attribues avec celui que tes réponses trahissent.</p>
+    <p class="accroche-doux">Tu peux mentir. Le quiz, lui, ne ment pas.</p>
+    <div class="depart"><button class="btn" id="commencer">Commencer le test</button></div>
+    <p class="pied">100 % humour, 0 % fédéral. Ce quiz ne remplace ni la FFT, ni ton partenaire de mauvaise foi.</p>
+  </section>
+
+  <!-- Question -->
+  <section class="ecran" id="quiz" aria-live="polite">
+    <div class="progression" id="progression"></div>
+    <p class="compteur" id="compteur"></p>
+    <h2 class="question" id="question"></h2>
+    <div class="reponses" id="reponses"></div>
+    <p class="reaction" id="reaction"></p>
+  </section>
+
+  <!-- Résultat -->
+  <section class="ecran" id="resultat">
+    <p class="verdict-intro">Ton profil</p>
+    <p class="profil" id="profil"></p>
+    <p class="commentaire" id="commentaire"></p>
+
+    <div class="tableau">
+      <div>
+        <p class="lib">Le niveau que tu t'es donné</p>
+        <p class="val" id="val-declare"></p>
+        <p class="niv" id="niv-declare"></p>
+      </div>
+      <div class="quiz">
+        <p class="lib">Le niveau selon tes réponses</p>
+        <p class="val" id="val-quiz"></p>
+        <p class="niv" id="niv-quiz"></p>
+      </div>
+    </div>
+    <p class="ecart" id="ecart"></p>
+
+    <div class="verite">
+      <h2>Le quiz, c'est pour rire. Ton vrai niveau, c'est la vidéo qui le dit.</h2>
+      <ol class="etapes">
+        <li>Deux téléphones fixés au grillage filment ton match.</li>
+        <li>L'IA analyse chaque échange : coups gagnants, fautes, jeu aux vitres. La vidéo est effacée sous 24 h.</li>
+        <li>Ton niveau certifié se met à jour, et ton classement avec. Fini les « je suis niveau 6 ».</li>
+      </ol>
+      <div class="actions">
+        <a class="btn" id="cta" href="#">Être prévenu au lancement</a>
+        <div class="partage">
+          <a class="btn secondaire" id="whatsapp" href="#" target="_blank" rel="noopener">Défier sur WhatsApp</a>
+          <button class="btn secondaire" id="copier">Partager mon résultat</button>
+        </div>
+        <p class="note-copie" id="note-copie" aria-live="polite"></p>
+        <button class="btn discret" id="recommencer">Refaire le test</button>
+      </div>
+    </div>
+    <p class="pied">PadelProof, le niveau qui ne se déclare pas, il se prouve.</p>
+  </section>
+</main>
+
+<script>
+  /* À MODIFIER : lien du bouton principal (formulaire d'inscription, puis page de l'appli au lancement) */
+  const LIEN_CTA = "#";
+
+  const NIVEAUX = ["Initiation", "Débutant", "Débutant+", "Intermédiaire", "Intermédiaire+", "Avancé", "Avancé+", "Expert", "Expert+"];
+
+  /* v = niveau estimé par la réponse (1 à 9) ; null = question humoristique, sans effet sur le score */
+  const QUESTIONS = [
+    { q: "Tu joues depuis combien de temps ?", r: [
+      { t: "4 mois, mais j'ai fait du tennis de table", v: 1, m: "Le ping-pong, c'est presque pareil. Presque." },
+      { t: "Environ un an, assez régulièrement", v: 4, m: "Une saison complète, ça commence à compter." },
+      { t: "Plus de 3 ans, j'ai des ampoules certifiées", v: 6, m: "Les mains ne mentent pas." },
+      { t: "Je ne compte plus les années, je compte les raquettes cassées", v: 5, m: "Le budget raquette, c'est aussi un niveau." }
+    ]},
+    { q: "La vitre, pour toi, c'est :", r: [
+      { t: "Un mur qui me veut du mal", v: 1, m: "Elle le sent, crois-nous." },
+      { t: "Je la laisse jouer et je prie", v: 3, m: "La prière, technique sous-estimée." },
+      { t: "Une alliée : je ressors la balle proprement", v: 6, m: "Ça, c'est du padel." },
+      { t: "Je sors des chiquitas après double vitre", v: 8, m: "On a un client sérieux." }
+    ]},
+    { q: "Ta bandeja ressemble à :", r: [
+      { t: "C'est quoi une bandeja ? Un plat espagnol ?", v: 1, m: "Délicieux, mais non." },
+      { t: "Un smash raté qui part au plafond", v: 3, m: "Le plafond te remercie pour la visite." },
+      { t: "Une vraie bandeja : je garde le filet", v: 6, m: "Propre." },
+      { t: "Bandeja, víbora ou rulo, selon mon humeur", v: 8, m: "Calme-toi, Galán." }
+    ]},
+    { q: "Ton expérience en tournoi :", r: [
+      { t: "Un tournoi ? Je joue le dimanche avec les collègues", v: 2, m: "Le tournoi du dimanche, le plus dur de tous." },
+      { t: "Quelques P25, je découvre", v: 4, m: "Bienvenue dans le grand bain." },
+      { t: "Je gagne régulièrement des matchs en P100", v: 6, m: "Respect." },
+      { t: "Je joue des P250 et plus", v: 8, m: "Tu es sûr d'être au bon endroit ?" }
+    ]},
+    { q: "Après une défaite, tu dis :", r: [
+      { t: "Mon partenaire était nul", v: null, m: "Il dit sûrement la même chose de toi." },
+      { t: "Le soleil, le vent, les balles", v: null, m: "Et la lune était mal placée." },
+      { t: "Ils ont eu de la chance", v: null, m: "Trois sets de suite, quelle chance." },
+      { t: "Ils étaient meilleurs, on retravaille", v: null, m: "Espèce rare. Protégée." }
+    ]},
+    { q: "Franchement, tu te donnes quel niveau ?", niveaux: true }
+  ];
+
+  const $ = id => document.getElementById(id);
+  let etape = 0, reponses = [], declare = 0, resultat = null;
+  const lent = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function montrer(id) {
+    document.querySelectorAll(".ecran").forEach(e => e.classList.remove("actif"));
+    const e = $(id);
+    e.classList.add("actif");
+    e.classList.remove("apparait"); void e.offsetWidth; e.classList.add("apparait");
+    window.scrollTo(0, 0);
+  }
+
+  function afficherQuestion() {
+    const Q = QUESTIONS[etape];
+    $("progression").innerHTML = QUESTIONS.map((_, i) => `<span class="${i < etape ? "fait" : ""}"></span>`).join("");
+    $("compteur").textContent = `Question ${etape + 1} sur ${QUESTIONS.length}`;
+    $("question").textContent = Q.q;
+    $("reaction").textContent = "";
+    $("reaction").classList.remove("visible");
+    const conteneur = $("reponses");
+    conteneur.className = Q.niveaux ? "reponses grille-niveaux" : "reponses";
+    conteneur.innerHTML = "";
+    if (Q.niveaux) {
+      NIVEAUX.forEach((nom, i) => {
+        const b = document.createElement("button");
+        b.className = "reponse";
+        b.innerHTML = `<span class="num">${i + 1}</span><span class="nom">${nom}</span>`;
+        b.addEventListener("click", () => choisirNiveau(i + 1, b));
+        conteneur.appendChild(b);
+      });
+    } else {
+      Q.r.forEach(rep => {
+        const b = document.createElement("button");
+        b.className = "reponse";
+        b.textContent = rep.t;
+        b.addEventListener("click", () => choisir(rep, b));
+        conteneur.appendChild(b);
+      });
+    }
+    montrer("quiz");
+    const premier = conteneur.querySelector("button");
+    if (premier) premier.focus({ preventScroll: true });
+  }
+
+  function choisir(rep, bouton) {
+    const conteneur = $("reponses");
+    if (conteneur.classList.contains("verrou")) return;
+    conteneur.classList.add("verrou");
+    bouton.classList.add("choisie");
+    reponses.push(rep);
+    $("reaction").textContent = rep.m;
+    $("reaction").classList.add("visible");
+    setTimeout(() => { etape++; afficherQuestion(); }, lent ? 1300 : 900);
+  }
+
+  function choisirNiveau(n, bouton) {
+    const conteneur = $("reponses");
+    if (conteneur.classList.contains("verrou")) return;
+    conteneur.classList.add("verrou");
+    bouton.classList.add("choisie");
+    declare = n;
+    setTimeout(afficherResultat, 500);
+  }
+
+  function calculer() {
+    const notes = reponses.filter(r => r.v !== null).map(r => r.v);
+    const moyenne = notes.reduce((a, b) => a + b, 0) / notes.length;
+    const estime = Math.min(9, Math.max(1, Math.round(moyenne)));
+    const ecart = declare - estime;
+    const vitreEnnemie = reponses[1] && reponses[1].v === 1;
+
+    let profil, texte;
+    if (estime <= 2 && declare <= 2) {
+      profil = "Le débutant assumé";
+      texte = "Tu débutes et tu le dis. Respect : en honnêteté, tu es déjà niveau 9.";
+    } else if (ecart >= 3) {
+      profil = "Le Zizou autoproclamé";
+      texte = "Le mental d'un pro, la bandeja d'un débutant. Le padel adore les gens comme toi : vous louez beaucoup de terrains.";
+    } else if (ecart === 2) {
+      profil = "L'optimiste du dimanche";
+      texte = "Tu arrondis au niveau supérieur, comme le score quand personne ne compte.";
+    } else if (ecart <= -2) {
+      profil = "Le modeste suspect";
+      texte = "Tu te sous-estimes. Ou tu prépares un mauvais coup pour piéger les copains au prochain P25.";
+    } else {
+      profil = "Le lucide";
+      texte = "Profil rare : tu sais exactement où tu en es. Tes partenaires te remercient.";
+    }
+    if (vitreEnnemie && profil !== "Le débutant assumé") texte += " Et la vitre, visiblement, n'est pas encore ton amie.";
+    return { estime, ecart, profil, texte };
+  }
+
+  function afficherResultat() {
+    resultat = calculer();
+    $("profil").textContent = resultat.profil;
+    $("commentaire").textContent = resultat.texte;
+    $("val-declare").textContent = declare;
+    $("niv-declare").textContent = NIVEAUX[declare - 1];
+    $("val-quiz").textContent = resultat.estime;
+    $("niv-quiz").textContent = NIVEAUX[resultat.estime - 1];
+    const e = resultat.ecart;
+    $("ecart").textContent = e === 0 ? "Écart : aucun. Impressionnant."
+      : e > 0 ? `Écart : ${e} niveau${e > 1 ? "x" : ""} d'optimisme.`
+      : `Écart : ${-e} niveau${e < -1 ? "x" : ""} de modestie.`;
+
+    const message = `J'ai fait le test PadelProof : je me donnais niveau ${declare}, le quiz dit ${resultat.estime}. Verdict : ${resultat.profil}. Et toi, tu oses ? ${location.href.split("#")[0]}`;
+    $("whatsapp").href = "https://wa.me/?text=" + encodeURIComponent(message);
+    $("copier").dataset.message = message;
+    $("note-copie").textContent = "";
+    $("cta").href = LIEN_CTA;
+    montrer("resultat");
+  }
+
+  $("commencer").addEventListener("click", () => { etape = 0; reponses = []; declare = 0; afficherQuestion(); });
+  $("recommencer").addEventListener("click", () => { etape = 0; reponses = []; declare = 0; afficherQuestion(); });
+  $("copier").addEventListener("click", async () => {
+    const msg = $("copier").dataset.message;
+    try {
+      if (navigator.share) { await navigator.share({ text: msg }); return; }
+      await navigator.clipboard.writeText(msg);
+      $("note-copie").textContent = "Résultat copié. Colle-le dans le groupe du club.";
+    } catch (err) {
+      $("note-copie").textContent = "Copie impossible ici : fais une capture d'écran.";
+    }
+  });
+</script>
+</body>
+</html>
