@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Teste ton niveau de padel | PadelProof</title>
-<meta name="description" content="6 questions, 2 minutes. Découvre l'écart entre le niveau que tu t'attribues et ton vrai niveau de padel.">
+<meta name="description" content="9 questions, 2 minutes. Découvre l'écart entre le niveau que tu t'attribues et ton vrai niveau de padel.">
 <meta property="og:title" content="Teste ton niveau de padel">
 <meta property="og:description" content="Tu te crois niveau 6 ? Le quiz a peut-être un autre avis.">
 <meta property="og:type" content="website">
@@ -256,7 +256,7 @@
   <!-- Accueil -->
   <section class="ecran actif" id="accueil">
     <h1>Teste ton niveau de padel<span class="vitre">sans tricher.</span></h1>
-    <p class="accroche">6 questions, 2 minutes. À la fin, on compare le niveau que tu t'attribues avec celui que tes réponses trahissent.</p>
+    <p class="accroche">9 questions, 2 minutes. À la fin, on compare le niveau que tu t'attribues avec celui que tes réponses trahissent.</p>
     <p class="accroche-doux">Tu peux mentir. Le quiz, lui, ne ment pas.</p>
     <div class="depart"><button class="btn" id="commencer">Commencer le test</button></div>
     <p class="pied">100 % humour, 0 % fédéral. Ce quiz ne remplace ni la FFT, ni ton partenaire de mauvaise foi.</p>
@@ -318,7 +318,8 @@
 
   const NIVEAUX = ["Initiation", "Débutant", "Débutant+", "Intermédiaire", "Intermédiaire+", "Avancé", "Avancé+", "Expert", "Expert+"];
 
-  /* v = niveau estimé par la réponse (1 à 9) ; null = question humoristique, sans effet sur le score */
+  /* v = niveau estimé par la réponse (1 à 9) ; null = question humoristique, sans effet sur le score
+     f = trait de caractère détecté, qui ajoute une ligne bonus au verdict */
   const QUESTIONS = [
     { q: "Tu joues depuis combien de temps ?", r: [
       { t: "4 mois, mais j'ai fait du tennis de table", v: 1, m: "Le ping-pong, c'est presque pareil. Presque." },
@@ -326,8 +327,14 @@
       { t: "Plus de 3 ans, j'ai des ampoules certifiées", v: 6, m: "Les mains ne mentent pas." },
       { t: "Je ne compte plus les années, je compte les raquettes cassées", v: 5, m: "Le budget raquette, c'est aussi un niveau." }
     ]},
+    { q: "Ton annonce pour trouver un quatrième ressemble à :", r: [
+      { t: "« Je débute, je suis niveau 3 »", v: 2, m: "Niveau 3, c'est déjà gérer les vitres. Mais on salue l'enthousiasme." },
+      { t: "« Je ne connais pas mon niveau, mais je dirais 5 ou 6 »", v: 3, m: "Niveau 6, c'est faire mieux que la grande majorité des joueurs. Rien que ça." },
+      { t: "« Classé vers 15 000, cherche partenaire niveau 7 pour un P100 »", v: 5, m: "Les niveaux 7 ne jouent plus de P100. Mais ils liront ton annonce avec plaisir.", f: "classe" },
+      { t: "« Niveau 4, je tiens l'échange et je veux progresser »", v: 4, m: "Annonce honnête détectée. Espèce rare." }
+    ]},
     { q: "La vitre, pour toi, c'est :", r: [
-      { t: "Un mur qui me veut du mal", v: 1, m: "Elle le sent, crois-nous." },
+      { t: "Un mur qui me veut du mal", v: 1, m: "Elle le sent, crois-nous.", f: "vitre" },
       { t: "Je la laisse jouer et je prie", v: 3, m: "La prière, technique sous-estimée." },
       { t: "Une alliée : je ressors la balle proprement", v: 6, m: "Ça, c'est du padel." },
       { t: "Je sors des chiquitas après double vitre", v: 8, m: "On a un client sérieux." }
@@ -338,6 +345,12 @@
       { t: "Une vraie bandeja : je garde le filet", v: 6, m: "Propre." },
       { t: "Bandeja, víbora ou rulo, selon mon humeur", v: 8, m: "Calme-toi, Galán." }
     ]},
+    { q: "Ton service, c'est plutôt :", r: [
+      { t: "Un service de tennis à pleine puissance, comme à Roland", v: 2, m: "Au padel, on sert sous la ceinture. Mais l'intention est là.", f: "tennis" },
+      { t: "Je fais rebondir la balle à hauteur d'épaule, personne ne dit rien", v: 2, m: "Tout le monde l'a vu. Personne n'ose te le dire.", f: "epaule" },
+      { t: "Sous la ceinture, bien placé vers la vitre", v: 6, m: "Réglementaire et vicieux. Parfait." },
+      { t: "Je varie : vitre, milieu, au corps, selon l'adversaire", v: 8, m: "Ça sent le joueur qui gagne des tournois." }
+    ]},
     { q: "Ton expérience en tournoi :", r: [
       { t: "Un tournoi ? Je joue le dimanche avec les collègues", v: 2, m: "Le tournoi du dimanche, le plus dur de tous." },
       { t: "Quelques P25, je découvre", v: 4, m: "Bienvenue dans le grand bain." },
@@ -346,12 +359,27 @@
     ]},
     { q: "Après une défaite, tu dis :", r: [
       { t: "Mon partenaire était nul", v: null, m: "Il dit sûrement la même chose de toi." },
-      { t: "Le soleil, le vent, les balles", v: null, m: "Et la lune était mal placée." },
-      { t: "Ils ont eu de la chance", v: null, m: "Trois sets de suite, quelle chance." },
+      { t: "Le soleil, le vent, les balles", v: null, m: "Et la lune était mal placée.", f: "meteo" },
+      { t: "Ils ont eu de la chance", v: null, m: "Deux sets de suite, quelle chance." },
       { t: "Ils étaient meilleurs, on retravaille", v: null, m: "Espèce rare. Protégée." }
+    ]},
+    { q: "Ton partenaire rate une balle facile. Tu :", r: [
+      { t: "Lui montres le bon geste, au ralenti", v: null, m: "Le prof non diplômé. Ton partenaire t'adore. Ou pas.", f: "prof" },
+      { t: "Dis « pas grave » en levant les yeux au ciel", v: null, m: "Il a vu les yeux. Il voit toujours les yeux." },
+      { t: "T'excuses, alors que c'est lui qui a raté", v: null, m: "Le désolé professionnel.", f: "desole" },
+      { t: "L'encourages : la suivante est pour nous", v: null, m: "Le partenaire que tout le monde veut." }
     ]},
     { q: "Franchement, tu te donnes quel niveau ?", niveaux: true }
   ];
+
+  const BONUS = {
+    vitre: "La vitre, visiblement, n'est pas encore ton amie.",
+    tennis: "Ton passé de tennisman se voit d'ici : au padel, le mur est ton ami, il va falloir lui pardonner.",
+    epaule: "Et ton service à hauteur d'épaule, tout le monde l'a remarqué.",
+    meteo: "Bonus : météorologue officiel du club.",
+    prof: "Bonus : tu corriges ton partenaire. Lui aussi aimerait voir ton niveau certifié.",
+    desole: "Bonus : tu t'excuses même pour ses fautes. Le padel a besoin de gens comme toi."
+  };
 
   const $ = id => document.getElementById(id);
   let etape = 0, reponses = [], declare = 0, resultat = null;
@@ -405,7 +433,7 @@
     reponses.push(rep);
     $("reaction").textContent = rep.m;
     $("reaction").classList.add("visible");
-    setTimeout(() => { etape++; afficherQuestion(); }, lent ? 1300 : 900);
+    setTimeout(() => { etape++; afficherQuestion(); }, lent ? 1400 : 900);
   }
 
   function choisirNiveau(n, bouton) {
@@ -422,12 +450,19 @@
     const moyenne = notes.reduce((a, b) => a + b, 0) / notes.length;
     const estime = Math.min(9, Math.max(1, Math.round(moyenne)));
     const ecart = declare - estime;
-    const vitreEnnemie = reponses[1] && reponses[1].v === 1;
+    const traits = reponses.map(r => r.f).filter(Boolean);
+    const a = t => traits.includes(t);
 
     let profil, texte;
     if (estime <= 2 && declare <= 2) {
       profil = "Le débutant assumé";
       texte = "Tu débutes et tu le dis. Respect : en honnêteté, tu es déjà niveau 9.";
+    } else if (ecart >= 3 && (declare >= 7 || a("classe"))) {
+      profil = "Le classé imaginaire";
+      texte = "Tu cherches des partenaires niveau 7 pour jouer des P100. Les niveaux 7, eux, ne te cherchent pas.";
+    } else if (ecart >= 2 && a("tennis")) {
+      profil = "Le tennisman en exil";
+      texte = "Gros service, gros coup droit, et la vitre comme ennemie jurée. Tu joues au tennis dans une cage.";
     } else if (ecart >= 3) {
       profil = "Le Zizou autoproclamé";
       texte = "Le mental d'un pro, la bandeja d'un débutant. Le padel adore les gens comme toi : vous louez beaucoup de terrains.";
@@ -441,7 +476,11 @@
       profil = "Le lucide";
       texte = "Profil rare : tu sais exactement où tu en es. Tes partenaires te remercient.";
     }
-    if (vitreEnnemie && profil !== "Le débutant assumé") texte += " Et la vitre, visiblement, n'est pas encore ton amie.";
+
+    /* Une seule ligne bonus, la plus parlante, pour garder le verdict court */
+    const ordre = ["prof", "desole", "meteo", "epaule", "vitre", "tennis"];
+    const bonus = ordre.find(t => a(t) && !(t === "tennis" && profil === "Le tennisman en exil"));
+    if (bonus && profil !== "Le débutant assumé") texte += " " + BONUS[bonus];
     return { estime, ecart, profil, texte };
   }
 
@@ -466,8 +505,9 @@
     montrer("resultat");
   }
 
-  $("commencer").addEventListener("click", () => { etape = 0; reponses = []; declare = 0; afficherQuestion(); });
-  $("recommencer").addEventListener("click", () => { etape = 0; reponses = []; declare = 0; afficherQuestion(); });
+  function demarrer() { etape = 0; reponses = []; declare = 0; afficherQuestion(); }
+  $("commencer").addEventListener("click", demarrer);
+  $("recommencer").addEventListener("click", demarrer);
   $("copier").addEventListener("click", async () => {
     const msg = $("copier").dataset.message;
     try {
